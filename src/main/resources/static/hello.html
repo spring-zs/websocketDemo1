@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>My WebSocket--还钱啦</title>
+
+    <script src="https://cdn.staticfile.org/vue/2.2.2/vue.min.js"></script>
+</head>
+<body>
+欠债还钱,天经地义.<br/><br/>
+<div id="ws">
+    <input id="userId" placeholder="userId" type="text"/>
+    <input id="name" placeholder="name" type="text"/>
+    <input id="moneyNum" placeholder="moneyNum" type="text"/>
+    <button onclick="sendMsg()">Send</button>
+    <button onclick="closeWS()" :disabled="!opened">Close</button>
+    <button onclick="openWS()"  :disabled="opened">Open</button>
+    <div v-html="msg"></div>
+</div>
+</body>
+
+<script type="text/javascript">
+    var websocket = null;
+
+    var wsVue = new Vue({
+        el: '#ws',
+        data: {
+            msg: "还成功了会通知你的.<br/>",
+            opened: false
+        },
+        mounted: function(){
+            initWs();
+        }
+    });
+
+    function initWs() {
+        //check if your browser supports WebSocket
+        if ('WebSocket' in window) {
+            websocket = new WebSocket("ws://localhost:8080/money/2333");
+        }
+        else {
+            alert('Sorry, websocket not supported by your browser.')
+        }
+
+        //Error callback
+        websocket.onerror = function () {
+            setMessageContent("error!");
+            wsVue.opened = false;
+        };
+
+        //socket opened callback
+        websocket.onopen = function (event) {
+            setMessageContent("成功连接");
+            wsVue.opened = true;
+        };
+
+        //message received callback
+        websocket.onmessage = function (event) {
+            setOnMessageContent(event.data);
+        };
+
+        //socket closed callback
+        websocket.onclose = function () {
+            setMessageContent("websocket closed");
+            wsVue.opened = false;
+        };
+
+        //when browser window closed, close the socket, to prevent server exception
+        window.onbeforeunload = function () {
+            websocket.close();
+        };
+    }
+
+    //update message to vue and then in div
+    function setOnMessageContent(content) {
+        var parse = JSON.parse(content);
+        wsVue.msg += '还钱数量:'+ parse.moneyNum +'==='+'还钱结果:'+ (parse.repayResult?'成功':'失败') + '<br/>';
+    }
+
+    //update message to vue and then in div
+    function setMessageContent(content) {
+        wsVue.msg += content + '<br/>';
+    }
+
+    //click to close the websocket
+    function closeWS() {
+        websocket.close();
+        wsVue.opened = false;
+    }
+
+    //click to open the websocket
+    function openWS() {
+        initWs();
+    }
+
+    //click to send message
+    function sendMsg() {
+        var userId = document.getElementById('userId').value;
+        var name = document.getElementById('name').value;
+        var moneyNum = document.getElementById('moneyNum').value;
+        var message = {
+            "userId":userId,
+            "name" : name,
+            "moneyNum":moneyNum
+        };
+        websocket.send(JSON.stringify(message));
+    }
+</script>
+</body>
+</html>
