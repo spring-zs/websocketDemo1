@@ -1,3 +1,4 @@
+此demo使用的是ServerEndpoint注解事项的websocket，此demo从其他地方copy的，版权归原作者
 # 使用的是ServerEndpoint 实现websocket，其中MoneyServer 中还在注解ServerEndpoint里配置了编解码类
 ## 1.新建一个springboot工程,添加一个maven依赖
 ~~~
